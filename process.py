@@ -6,6 +6,7 @@ def chooseplatform():
     return sys.platform
 
 # Constants and platform specific paths
+# Change these accordingly!!
 CEMRG = {
     'linux': r'$HOME/Desktop/CemrgApp-Linux-v2.2/CemrgApp-Linux'
 }
@@ -34,7 +35,8 @@ def fullfile(*args):
 
 def run_cmd(script_dir, cmd_name, arguments, debug = False ) :
     """ Return the command to execute""" 
-    cmd = fullfile(script_dir, cmd_name) + ' '
+    cmd_name = fullfile(script_dir, cmd_name) if script_dir != '' else cmd_name
+    cmd = cmd_name + ' '
     cmd += ' '.join(arguments)
     stst = 0
     if LOGFILE != '' :
@@ -141,6 +143,13 @@ def main(args):
 
         check_inputs(base_dir, args.segmentation, iterations, isovalue, blur)
         create_segmentation_mesh(base_dir, args.segmentation, iterations, isovalue, blur, debug=debugging)
+        
+        if (args.segmentation != 'PVeinsCroppedImage') : 
+            log_to_file(LOGFILE, f'Changing segmentation {args.segmentation} to PVeinsCroppedImage (for scar)')
+            arguments = [fullfile(base_dir, args.segmentation), fullfile(base_dir, 'PVeinsCroppedImage.nii')]
+            cp_out, _ = run_cmd('', 'cp', arguments, debug)
+            if cp_out != 0:
+                log_to_file('Conversion failed...')
 
     elif mode == 'scar':
         lge_file = args.scar_lge
@@ -155,7 +164,7 @@ if __name__ == '__main__':
     in_parser = argparse.ArgumentParser(description='SOME PROCESS.')
     in_parser.add_argument('mode', type=str, choices=['surf', 'scar'])
     in_parser.add_argument('-dir', '--base-dir', type=str, help='Base directory with data.', required=True) 
-    in_parser.add_argument('-seg', '--segmentation', type=str, default='LA-reg.nii', required=False)
+    in_parser.add_argument('-seg', '--segmentation', type=str, default='PVeinsCroppedImage.nii', required=False)
     in_parser.add_argument('-d', '--debug', action='store_true', help='Debugging mode')
     # parameters specific to surf mode
     in_parser.add_argument('--surf-iterations', type=int, default=1, required=False)
